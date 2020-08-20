@@ -34,11 +34,23 @@ def multiply_matrix(mat_x, mat_y):
 
 def naive_algo(mat, print_res):
     temp = mat
-    for i in range(mat.shape[0]):
-        temp = multiply_matrix(mat, temp)
-        if print_res:
-            print(f"W{i+1} =")
-            print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in temp]))
+    temp2 = multiply_matrix(mat, temp)
+    temp3 = multiply_matrix(mat, multiply_matrix(mat, temp))
+
+    for i in range(2, mat.shape[0]+1):
+        if i % 2 == 0:
+            # temp2 = multiply_matrix(mat, temp)
+            if print_res:
+                print(f"MR^{i} =")
+                print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in temp2]))
+        else:
+            # temp3 = multiply_matrix(mat, multiply_matrix(mat, temp))
+            if print_res:
+                print(f"MR^{i} =")
+                print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in temp3]))
+
+    temp = temp + temp2 + temp3
+    temp[temp >= 1] = 1
     return temp
 
 
@@ -48,7 +60,7 @@ def warshall_algo(mat, print_res):
         for i in range(mat.shape[0]):
             for j in range(mat.shape[0]):
                 mat[i][j] = mat[i][j] or (mat[i][k] and mat[k][j])
-        result += ("W" + str(k+1) + " is: \n" + str(mat).replace("],", "] \n") + "\n")
+        result += ("W_" + str(k+1) + " is: \n" + str(mat).replace("],", "] \n") + "\n")
     if print_res:
         print(result)
     return mat
@@ -60,18 +72,18 @@ def interactive_console():
         print("2. Insert User Inputs")
         input_method = int(input("Select the input method for your relation matrix : 1 or 2\n"))
         if input_method == 1:
-            for mat_order in range(2, 11):
+            for mat_order in range(3, 11):
                 mr = create_matrix(mat_size=mat_order)
                 print_matrix("of order", mr)
                 # res_mat = np.empty([5, 5])
                 print("\n=============== NAIVE ALGORITHM ===============")
-                print(f"W0 =")
+                print(f"MR^1 =")
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in mr]))
                 res_mat = naive_algo(mr, True)
                 print(f'Transitive closure using NAIVE, MR* =')
                 print('\n'.join([''.join(['{:6}'.format(item) for item in row]) for row in res_mat]))
                 print("\n=============== WARSHALL ALGORITHM ===============")
-                print(f'MR0 =')
+                print(f'W_0 =')
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in mr]))
                 res_mat = warshall_algo(mr, True)
                 print(f'Transitive closure using WARSHALL, MR* =')
@@ -86,13 +98,13 @@ def interactive_console():
                 matrix = np.array(entries).reshape(order, order)
                 print_matrix("Entered", matrix)
                 print("\n=============== NAIVE ALGORITHM ===============")
-                print(f"W0 =")
+                print(f"MR^1 =")
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in matrix]))
                 res_1 = naive_algo(matrix, True)
                 print(f'\nTransitive closure using NAIVE, MR* =')
                 print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in res_1]))
                 print("\n=============== WARSHALL ALGORITHM ===============")
-                print(f'MR0 =')
+                print(f'W_0 =')
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in matrix]))
                 res_2 = warshall_algo(matrix, True)
                 print(f'\nTransitive closure using WARSHALL, MR* =')
@@ -103,38 +115,60 @@ def interactive_console():
         print(exp.args)
 
 
+def exec_log_graph(mat_order_range, naive_time_list, warshall_time_list):
+    fig, ax = plt.subplots(figsize=(15, 10))
+    fig.suptitle("Naive & Warshall Algorithm execution time v/s Order of matrices", fontsize=16)
+    ax.title.set_text('Log Log Plot of the time taken')
+    ax.loglog(np.arange(mat_order_range[0], mat_order_range[1]), warshall_time_list, label="Warshall Algorithm")
+    ax.loglog(np.arange(mat_order_range[0], mat_order_range[1]), naive_time_list, label="Naive Algorithm")
+    ax.set_xlabel("Order of Adjacency Matrix")
+    ax.set_ylabel("Execution Time")
+    plt.legend()
+    plt.show()
+    fig.savefig("exec_log_plot.png")
+    plt.close(fig)
+
+
 def log_log_graph(naive_time_list, warshall_time_list):
-    fig, ax = plt.subplots(constrained_layout=True)
-    ax.loglog(naive_time_list, warshall_time_list, color='blue', marker='o', linestyle='--')
-    ax.set_xlabel('NAIVE Algorithm Time')
-    ax.set_ylabel('WARSHALL Algorithm Time')
+    fig, ax = plt.subplots(figsize=(15, 10))
+    fig.suptitle("Naive Algorithm execution time v/s Warshall Algorithm execution time", fontsize=16)
     ax.set_title('Log Log Plot of the time taken')
+    ax.loglog(naive_time_list, warshall_time_list, color='blue', marker='o', linestyle='--')
+    ax.set_xlabel('NAIVE Algorithm Execution Time')
+    ax.set_ylabel('WARSHALL Algorithm Execution Time')
+    # plt.legend()
     plt.show()
     fig.savefig("loglog_plot.png")
     plt.close(fig)
 
 
 def assignment_problem():
+    mat_order_range = (10, 101)
     naive_time_list = []
     warshall_time_list = []
-    print("Computing Naive and Warshall algorithm for Matrices of order 10-100")
-    for mat_order in range(10, 101):
+    start_exec = time.time()
+    print(f"Computing Naive and Warshall algorithm for Matrices of order {mat_order_range[0]}-{mat_order_range[1]}")
+    for mat_order in range(mat_order_range[0], mat_order_range[1]):
         mr = np.random.randint(2, size=(mat_order, mat_order))
-        start_time = time.time()
+        naive_start = time.perf_counter()
         transitive_closure_using_naive = naive_algo(mr, False)
         print(f'Matrix {mat_order}: [{transitive_closure_using_naive.shape[0]}]'
               f'[{transitive_closure_using_naive.shape[1]}]')
-        naive_time_list.append(time.time() - start_time)
+        naive_time_list.append(time.perf_counter() - naive_start)
         # print(transitive_closure_using_naive)
-        start_time = time.time()
+        warshall_start = time.perf_counter()
         transitive_closure_using_warshall = warshall_algo(mr, False)
         print(f'Matrix {mat_order}: [{transitive_closure_using_warshall.shape[0]}]'
               f'[{transitive_closure_using_warshall.shape[1]}]')
-        warshall_time_list.append(time.time() - start_time)
+        warshall_time_list.append(time.perf_counter() - warshall_start)
         # print(transitive_closure_using_warshall)
-    print(naive_time_list)
-    print(warshall_time_list)
+    # print(naive_time_list)
+    # print(warshall_time_list)
+    exec_log_graph(mat_order_range, naive_time_list, warshall_time_list)
+    print("The outcome graph is of SECOND ORDER")
     log_log_graph(naive_time_list, warshall_time_list)
+    print("The outcome graph is of SECOND ORDER")
+    print(f"Total execution time taken : {time.time() - start_exec}")
 
 
 # Press the green button in the gutter to run the script.
