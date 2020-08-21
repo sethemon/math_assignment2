@@ -34,17 +34,17 @@ def multiply_matrix(mat_x, mat_y):
 
 def naive_algo(mat, print_res):
     temp = mat
-    temp2 = multiply_matrix(mat, temp)
-    temp3 = multiply_matrix(mat, multiply_matrix(mat, temp))
+    temp2 = np.zeros(mat.shape[0])
+    temp3 = np.zeros(mat.shape[0])
 
     for i in range(2, mat.shape[0]+1):
         if i % 2 == 0:
-            # temp2 = multiply_matrix(mat, temp)
+            temp2 = multiply_matrix(mat, temp)
             if print_res:
                 print(f"MR^{i} =")
                 print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in temp2]))
         else:
-            # temp3 = multiply_matrix(mat, multiply_matrix(mat, temp))
+            temp3 = multiply_matrix(mat, multiply_matrix(mat, temp))
             if print_res:
                 print(f"MR^{i} =")
                 print('\n'.join([''.join(['{:8}'.format(item) for item in row]) for row in temp3]))
@@ -68,8 +68,8 @@ def warshall_algo(mat, print_res):
 
 def interactive_console():
     try:
-        print("1. View Random matrices of order - 2 to 10")
-        print("2. Insert User Inputs")
+        print("1. View Random matrices of order - 3 to 10")
+        print("2. Insert your own Inputs")
         input_method = int(input("Select the input method for your relation matrix : 1 or 2\n"))
         if input_method == 1:
             for mat_order in range(3, 11):
@@ -89,8 +89,8 @@ def interactive_console():
                 print(f'Transitive closure using WARSHALL, MR* =')
                 print('\n'.join([''.join(['{:6}'.format(item) for item in row]) for row in res_mat]))
         elif input_method == 2:
-            order = int(input("Enter order of the matrix: 2 to 10\n"))
-            if order < 2 or order > 10:
+            order = int(input("Enter order of the matrix: 3 to 10\n"))
+            if order < 3 or order > 10:
                 print("SORRY, not supported.")
             else:
                 print("Enter the entries in a single line (separated by space): ")
@@ -107,7 +107,7 @@ def interactive_console():
                 print(f'W_0 =')
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in matrix]))
                 res_2 = warshall_algo(matrix, True)
-                print(f'\nTransitive closure using WARSHALL, MR* =')
+                print(f'Transitive closure using WARSHALL, MR* =')
                 print('\n'.join([''.join(['{:4}'.format(item) for item in row]) for row in res_2]))
         else:
             print("SORRY, Not Supported.")
@@ -125,20 +125,20 @@ def exec_log_graph(mat_order_range, naive_time_list, warshall_time_list):
     ax.set_ylabel("Execution Time")
     plt.legend()
     plt.show()
-    fig.savefig("exec_log_plot.png")
+    fig.savefig("exec_loglog_plot.png")
     plt.close(fig)
 
 
 def log_log_graph(naive_time_list, warshall_time_list):
     fig, ax = plt.subplots(figsize=(15, 10))
     fig.suptitle("Naive Algorithm execution time v/s Warshall Algorithm execution time", fontsize=16)
-    ax.set_title('Log Log Plot of the time taken')
+    ax.set_title('Comparison Plot of the execution times')
     ax.loglog(naive_time_list, warshall_time_list, color='blue', marker='o', linestyle='--')
     ax.set_xlabel('NAIVE Algorithm Execution Time')
     ax.set_ylabel('WARSHALL Algorithm Execution Time')
     # plt.legend()
-    plt.show()
-    fig.savefig("loglog_plot.png")
+    # plt.show()
+    fig.savefig("comparison_plot.png")
     plt.close(fig)
 
 
@@ -165,9 +165,14 @@ def assignment_problem():
     # print(naive_time_list)
     # print(warshall_time_list)
     exec_log_graph(mat_order_range, naive_time_list, warshall_time_list)
-    print("The outcome graph is of SECOND ORDER")
+    naive_slope, intercept = np.polyfit(
+        np.log(np.arange(mat_order_range[0], mat_order_range[1])), np.log(naive_time_list), 1)
+    warshall_slope, intercept = np.polyfit(
+        np.log(np.arange(mat_order_range[0], mat_order_range[1])), np.log(warshall_time_list), 1)
+    print("========================================================================")
+    print(f"The order of NAIVE ALGORITHM is {naive_slope} i.e. O(n^4)")
+    print(f"The order of WARSHALL ALGORITHM is {np.ceil(warshall_slope)} i.e. O(n^3)")
     log_log_graph(naive_time_list, warshall_time_list)
-    print("The outcome graph is of SECOND ORDER")
     print(f"Total execution time taken : {time.time() - start_exec}")
 
 
